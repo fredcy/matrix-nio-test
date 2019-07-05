@@ -10,6 +10,9 @@ from nio import (AsyncClient, LoginResponse, SyncResponse, RoomMessageText)
 import argparse
 import configparser
 import logging
+import sys
+
+import tztipbot
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -81,12 +84,14 @@ async def handle_sync_response(client, response):
                 if isinstance(event, RoomMessageText):
                     logger.info(f"message in \"{display_name}\" from {event.sender}: {event.body}")
 
-                    if event.body.strip().startswith("!ping"):
-                        content = {
-                            "body": "pong",
-                            "msgtype": "m.notice",
-                        }
-                        await client.room_send(room_id, 'm.room.message', content)
+                    outputs = tztipbot.received_message({
+                        'room': room_id,
+                        'sender': event.sender,
+                        'body': event.body,
+                    })
+
+                    for output in outputs:
+                        await client.room_send(room_id, 'm.room.message', output)
 
                 else:
                     logger.info(f"event: {type(event)}: {event}")

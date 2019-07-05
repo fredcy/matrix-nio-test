@@ -1,4 +1,7 @@
+__pycache__
+
 config
 next_batch
+secret_keys
 ve
 vendor
