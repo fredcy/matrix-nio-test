@@ -44,10 +44,12 @@ async def amain(client, config):
         except FileNotFoundError:
             pass
 
+        get_full_state = True   # request full state on first sync only
         while (True):
-            response = await client.sync(30000)
+            response = await client.sync(30000, full_state=get_full_state)
             if isinstance(response, SyncResponse):
-                handle_sync_response(client, response)
+                await handle_sync_response(client, response)
+                get_full_state = False
             else:
                 logger.error(f"unexpected response type: {type(response)}: {response}")
 
@@ -64,19 +66,29 @@ def handle_login_response(client, response):
     logger.info(f"login response: {response}")
 
 
-def handle_sync_response(client, response):
+async def handle_sync_response(client, response):
     logger.debug(f"sync response: {response}")
 
     with open("next_batch","w") as next_batch_token:
         next_batch_token.write(response.next_batch)
 
-    logger.debug(f"rooms: {response.rooms}")
+    for room_id, room in response.rooms.join.items():
+        display_name = client.rooms[room_id].display_name
 
-    if len(response.rooms.join) > 0:
-        joins = response.rooms.join
-        for room_id in joins:
-            for event in joins[room_id].timeline.events:
-                logger.debug(f"event: {event}")
+        if len(room.timeline.events) > 0:
+            for event in room.timeline.events:
+                if isinstance(event, RoomMessageText):
+                    logger.info(f"message in \"{display_name}\" from {event.sender}: {event.body}")
+
+                    if event.body.strip().startswith("!ping"):
+                        content = {
+                            "body": "pong",
+                            "msgtype": "m.notice",
+                        }
+                        await client.room_send(room_id, 'm.room.message', content)
+
+                else:
+                    logger.info(f"event: {type(event)}: {event}")
 
 
 if __name__ == "__main__":
