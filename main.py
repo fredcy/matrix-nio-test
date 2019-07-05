@@ -7,12 +7,13 @@ from importlib import util
 import asyncio
 from nio import (AsyncClient, LoginResponse, SyncResponse, RoomMessageText)
 
+import argparse
 import configparser
 import logging
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 def main():
@@ -92,4 +93,11 @@ async def handle_sync_response(client, response):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="bot based on matrix-nio")
+    parser.add_argument('--debug', '-d', action='store_true')
+    args = parser.parse_args()
+    logger.debug(f"args = {args}")
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
+
     main()
