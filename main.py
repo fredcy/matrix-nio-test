@@ -47,16 +47,13 @@ async def amain(client, config):
         while (True):
             response = await client.sync(30000)
             if isinstance(response, SyncResponse):
-                handle_sync_response(response)
+                handle_sync_response(client, response)
             else:
                 logger.error(f"unexpected response type: {type(response)}: {response}")
 
     except asyncio.CancelledError:
         logger.info(f"asyncio cancellederror")
-    except KeyboardInterrupt:
-        logger.info(f"keyboard interrupt")
-    except Exception as exc:
-        logger.exception(f"async failure: {type(exc)}: {exc}")
+
     finally:
         # It seems that we can only close our async client from within this
         # async function, which is why we catch exceptions here.
@@ -67,17 +64,20 @@ def handle_login_response(client, response):
     logger.info(f"login response: {response}")
 
 
-def handle_sync_response(response):
+def handle_sync_response(client, response):
     logger.debug(f"sync response: {response}")
 
     with open("next_batch","w") as next_batch_token:
         next_batch_token.write(response.next_batch)
+
+    logger.debug(f"rooms: {response.rooms}")
 
     if len(response.rooms.join) > 0:
         joins = response.rooms.join
         for room_id in joins:
             for event in joins[room_id].timeline.events:
                 logger.debug(f"event: {event}")
+
 
 if __name__ == "__main__":
     main()
