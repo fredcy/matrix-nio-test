@@ -2,7 +2,12 @@ matrix-nio
 
 base58
 fastecdsa
+netstruct
+pendulum
+ply
 pyblake2
 pysodium
+requests
 secp256k1
 simplejson
+tqdm

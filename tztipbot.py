@@ -1,7 +1,9 @@
+import pprint
 import sys
 
 sys.path.append('./vendor/pytezos')
 from pytezos.tools.keychain import Keychain
+from pytezos.rpc.node import Node
 
 
 def received_message(message):
@@ -18,6 +20,12 @@ def received_message(message):
 
     elif body.startswith("!key"):
         outputs += key(message)
+
+    elif body.startswith("!head"):
+        outputs += head(message)
+
+    elif body.startswith("!sign"):
+        outputs += sign(message)
 
     return outputs
 
@@ -51,3 +59,25 @@ def key(message):
     }
     return [content]
 
+def head(message):
+    node_url = "http://f.ostraca.org:8732"
+    node = Node(node_url)
+
+    head = node.get("/chains/main/blocks/head")
+
+    content = {
+        "body": pprint.pformat(head['header']),
+        "msgtype": "m.notice",
+    }
+    return [content]
+
+def sign(message):
+    keychain = Keychain("vendor/secret_keys")
+    key = keychain.get_key('foobar')
+
+    signature = key.sign(message['body'])
+    content = {
+        "body": signature,
+        "msgtype": "m.notice",
+    }
+    return [content]
